@@ -40,6 +40,12 @@ def read_csv(path,n,unit):
     if not {'s_m','strain'}.issubset(a.dtype.names or ()):
         raise ValueError('CSV requires s_m,strain columns')
     s,y=np.atleast_1d(a['s_m']),np.atleast_1d(a['strain'])
+    return prepare_arrays(s,y,n,unit)
+
+def prepare_arrays(s,y,n,unit):
+    s,y=np.asarray(s,dtype=float),np.asarray(y,dtype=float)
+    if unit not in ('strain','microstrain') or s.ndim!=1 or y.shape!=s.shape:
+        raise ValueError('matching 1D arrays and explicit strain/microstrain unit required')
     if len(s)<10 or not np.isfinite(s).all() or np.any(np.diff(s)<=0):
         raise ValueError('at least 10 ordered finite coordinates required')
     if not np.isfinite(y).all():

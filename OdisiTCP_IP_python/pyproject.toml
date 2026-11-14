@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "odisi-tcp"
+version = "0.1.0"
+description = "Shared Luna ODiSI streaming JSON TCP receiver"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+plot = ["matplotlib>=3.8"]
+
+[project.scripts]
+odisi-receive = "odisi_tcp.cli:main"
+odisi-mock = "odisi_tcp.mock:main"
+
+[tool.setuptools]
+packages = ["odisi_tcp"]

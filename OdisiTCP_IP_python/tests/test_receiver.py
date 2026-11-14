@@ -1,13 +1,13 @@
 import json,math,socket,tempfile,threading,time,unittest
 from pathlib import Path
-from odisi_receiver import LineDecoder,ODISIReceiver
+from odisi_tcp import LineDecoder,ODISIReceiver
 
 def packet(ch=1,data=None):
     return {'messageType':'measurement','channel':ch,'data':[1,None,-2.5] if data is None else data}
 
 class Tests(unittest.TestCase):
     def test_every_byte_fragment_and_utf8(self):
-        a=packet();a['name']='光纤 {test}'
+        a=packet();a['name']='鍏夌氦 {test}'
         raw=('data: '+json.dumps(a,ensure_ascii=False)+'\r\n'+json.dumps(packet(2))+'\n').encode()
         d=LineDecoder();out=[]
         for b in raw:out.extend(d.feed(bytes([b])))
