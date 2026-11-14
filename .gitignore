@@ -1,0 +1,14 @@
+.conda/
+.conda-cache/
+.venv/
+venv/
+.vendor/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Local IDE settings and instrument captures
+/.vscode/
+.idea/
+/recordings/

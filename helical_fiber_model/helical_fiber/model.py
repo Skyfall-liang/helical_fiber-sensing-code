@@ -1,6 +1,7 @@
 """Paper equations (1), (5)-(10), (13)-(16); SI units throughout."""
 from dataclasses import dataclass, asdict
 import numpy as np
+from scipy.interpolate import BSpline
 from scipy.signal import find_peaks
 
 @dataclass(frozen=True)
@@ -26,9 +27,13 @@ class Config:
     noise_floor_strain: float = 1e-6
     tukey_c: float = 4.685
     curvature_min_per_m: float = 1e-4
+    background_knot_spacing_m: float = 0.
+    live_fit_window_m: tuple[float, float] | None = None
 
     def __post_init__(self):
         for key, value in asdict(self).items():
+            if key == 'live_fit_window_m':
+                continue
             if not np.isfinite(value):
                 raise ValueError(f'{key} must be finite')
         for key in ('radius_m', 'pitch_m', 'fiber_length_m', 'backbone_length_m',
@@ -39,8 +44,13 @@ class Config:
                 raise ValueError(f'{key} must be positive')
         if self.zones < 1 or int(self.zones) != self.zones:
             raise ValueError('zones must be a positive integer')
+        if self.live_fit_window_m is not None:
+            lower, upper = self.live_fit_window_m
+            if not np.isfinite([lower, upper]).all() or not 0 <= lower < upper <= self.fiber_length_m:
+                raise ValueError('live_fit_window_m must be an ordered window in local fiber coordinates')
         for key in ('threshold_strain', 'prominence_strain', 'min_peak_distance_m',
-                    'curvature_min_per_m', 'gap_intercept_strain', 'disk_intercept_strain'):
+                    'curvature_min_per_m', 'gap_intercept_strain', 'disk_intercept_strain',
+                    'background_knot_spacing_m'):
             if getattr(self, key) < 0:
                 raise ValueError(f'{key} must be nonnegative')
 
@@ -73,12 +83,18 @@ class HelicalFiberModel:
         q = c.frequency_modifier*s/self.lam + c.phase_zero_rad
         factor = -c.strain_scale*c.radius_m*self.envelope(s)
         x = np.column_stack((factor*np.sin(q), factor*np.cos(q)))
-        return np.column_stack((x, np.ones(len(s)))) if fit_offset else x
+        if not fit_offset:
+            return x
+        spacing = c.background_knot_spacing_m
+        if spacing and s[-1] > s[0]:
+            knots = np.r_[[s[0]]*4, np.arange(s[0]+spacing, s[-1], spacing), [s[-1]]*4]
+            return np.column_stack((x, BSpline.design_matrix(s, knots, 3).toarray()))
+        return np.column_stack((x, np.ones(len(s))))
 
     def bending(self, s, kappa, phi, offset=0.):
         if not np.isfinite([kappa, phi, offset]).all() or kappa < 0:
             raise ValueError('finite kappa >= 0, phi and offset required')
-        return self.design(s) @ np.array([kappa*np.cos(phi), kappa*np.sin(phi), offset])
+        return self.design(s, False) @ np.array([kappa*np.cos(phi), kappa*np.sin(phi)]) + offset
 
     def zone(self, s):
         c = self.config
@@ -173,14 +189,15 @@ class HelicalFiberModel:
             warnings.append('Sparse sampling or large gaps: carrier and contact localization may be unreliable')
         summary = {'kappa_per_m': kappa, 'theta_deg': float(np.rad2deg(kappa*self.config.backbone_length_m)),
                    'phi_deg': float(np.rad2deg(phi)) if phase_valid else None,
-                   'phi_rad': phi if phase_valid else None, 'offset_strain': float(coef[2]) if fit_offset else 0.,
+                   'phi_rad': phi if phase_valid else None,
+                   'offset_strain': float(np.mean(design[:, 2:] @ coef[2:])) if fit_offset else 0.,
                    'converged': converged, 'iterations': iteration, 'valid_samples': int(valid.sum()),
                    'rmse_strain': float(np.sqrt(np.mean(residual[valid]**2))),
                    'inlier_rmse_strain': float(np.sqrt(np.average(residual[valid]**2, weights=weights))),
                    'design_condition': float(np.linalg.cond(xn)), 'warnings': warnings}
         contacts = self.detect_contacts(s, residual, kappa, phi if phase_valid else 0.)
         return {'summary': summary, 'contacts': contacts, 'fitted': fitted,
-                'bending': fitted-summary['offset_strain'], 'residual': residual, 'weights': all_weights}
+                'bending': design[:, :2] @ coef[:2], 'residual': residual, 'weights': all_weights}
 
     def detect_contacts(self, s, residual, kappa=0., phi=0.):
         # Split on missing samples: never bridge an unmeasured interval.
@@ -209,8 +226,7 @@ class HelicalFiberModel:
                 'xyz_m': self.helix_xyz([s[i]], kappa, phi)[0].tolist()})
         return results
 
-    def helix_xyz(self, s, kappa=0., phi=0.):
-        """Bent surface in segment base frame, PCC; no dual-segment base transform."""
+    def _backbone_geometry(self, s, kappa, phi):
         s = self.coordinates(s)
         c = self.config
         phi = phi+c.geometry_phi_offset_rad
@@ -220,12 +236,22 @@ class HelicalFiberModel:
         xp = .5*kappa*l*l*np.sinc(t/(2*np.pi))**2
         zp = l*np.sinc(t/np.pi)
         cp, sp = np.cos(phi), np.sin(phi)
+        return np.column_stack((xp*cp, xp*sp, zp)), t, cp, sp
+
+    def backbone_xyz(self, s, kappa=0., phi=0.):
+        """PCC centerline in the segment base frame, sampled at fiber coordinates s."""
+        return self._backbone_geometry(s, kappa, phi)[0]
+
+    def helix_xyz(self, s, kappa=0., phi=0.):
+        """Bent surface in segment base frame, PCC; no dual-segment base transform."""
+        s = np.asarray(s, dtype=float)
+        backbone, t, cp, sp = self._backbone_geometry(s, kappa, phi)
         psi = s/self.lam
-        vx, vy = c.radius_m*np.cos(psi), c.radius_m*np.sin(psi)
+        vx, vy = self.config.radius_m*np.cos(psi), self.config.radius_m*np.sin(psi)
         v1x, v1y = vx*cp+vy*sp, -vx*sp+vy*cp
-        return np.column_stack((xp*cp+v1x*np.cos(t)*cp-v1y*sp,
-                                xp*sp+v1x*np.cos(t)*sp+v1y*cp,
-                                zp-v1x*np.sin(t)))
+        return backbone + np.column_stack((v1x*np.cos(t)*cp-v1y*sp,
+                                           v1x*np.cos(t)*sp+v1y*cp,
+                                           -v1x*np.sin(t)))
 
 
 def calibrate_force(force_n, peak_strain, fit_intercept=True):
