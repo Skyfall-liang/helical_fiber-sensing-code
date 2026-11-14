@@ -1,0 +1,68 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "1 Generate synthetic data",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/generate_data.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "args": [],
+      "justMyCode": true
+    },
+    {
+      "name": "2 Train joint network",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/train.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "args": [
+        "--epochs",
+        "35"
+      ],
+      "justMyCode": true
+    },
+    {
+      "name": "3 Evaluate held-out test",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/evaluate.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "args": [
+        "--split",
+        "test"
+      ],
+      "justMyCode": true
+    },
+    {
+      "name": "4 Predict real bending + contact",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/predict.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "args": [],
+      "justMyCode": true
+    },
+    {
+      "name": "5 Predict synthetic pure contact",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/predict.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "args": [
+        "--input",
+        "data/synthetic/example_pure_contact.csv",
+        "--unit",
+        "strain",
+        "--out",
+        "outputs/example_pure_contact"
+      ],
+      "justMyCode": true
+    }
+  ]
+}

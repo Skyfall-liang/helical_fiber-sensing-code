@@ -1,0 +1,40 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Synthetic demo",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/run.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "args": [
+        "--show"
+      ]
+    },
+    {
+      "name": "Fit CSV",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/run.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "args": [
+        "--input",
+        "${input:csv}",
+        "--unit",
+        "microstrain",
+        "--out",
+        "outputs/real",
+        "--show"
+      ]
+    }
+  ],
+  "inputs": [
+    {
+      "id": "csv",
+      "type": "promptString",
+      "description": "CSV path: s_m,strain in microstrain"
+    }
+  ]
+}

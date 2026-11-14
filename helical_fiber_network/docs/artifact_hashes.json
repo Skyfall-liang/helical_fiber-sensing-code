@@ -1,0 +1,9 @@
+{
+  "runs\\joint\\best.pt": "4cc753c87f81f32f42d07a47905ad4a84af9603920a825c86ca52c3de3363282",
+  "fiber_net\\theory_reference.py": "784ebc9aba864516ad97a2df9833cf28ef2fec9aed91988a71b54bbfd1783b0b",
+  "data\\synthetic\\manifest.json": "dd7e6d369e7cbfb2e90cfb9a82e8aedd097b2ca04697a53545b4b459cf627cf3",
+  "data\\synthetic\\train.npz": "19527d2a58daa409151c05ba9b4589756b6d1d63331141481e001f19c207044f",
+  "data\\synthetic\\val.npz": "896e63e8befa89d53a35972fbe8843cd0bd51689d1065f47ff45bd6231039189",
+  "data\\synthetic\\test.npz": "b2911b831038dc34a9746e142e7f6435ea33ba9f4e87a25fa2ca714033f229bc",
+  "data\\synthetic\\stress.npz": "7b6b8c2d083c8454dbb704a2833a2e2b2a1ab9b22d0cdc7744518463e7e20ad8"
+}

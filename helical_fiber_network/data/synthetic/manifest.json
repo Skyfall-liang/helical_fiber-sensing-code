@@ -1,0 +1,33 @@
+{
+  "strain_unit": 0.0001,
+  "samples_per_frame": 1536,
+  "kinds": [
+    "pure_bending",
+    "bending_contact",
+    "pure_contact"
+  ],
+  "splits": {
+    "train": {
+      "count": 4096,
+      "seed": 1102,
+      "stress": false
+    },
+    "val": {
+      "count": 512,
+      "seed": 2102,
+      "stress": false
+    },
+    "test": {
+      "count": 768,
+      "seed": 3102,
+      "stress": false
+    },
+    "stress": {
+      "count": 768,
+      "seed": 4102,
+      "stress": true
+    }
+  },
+  "contact_semantics": "per-fiber-peak effective normal force; cluster is a synthetic footprint, not an identified independent object",
+  "real_data_use": "visual morphology reference only; no real frame or label is included in any split"
+}

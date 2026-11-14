@@ -1,0 +1,16 @@
+[
+  {
+    "source": "C:\\Users\\ZRF\\Sync Devices Sharing\\2025 Paper\\2025-2026 icra\\Code_Helix Sensor\\Helix sensor streaming and force reconstruction\\Exp_data_572_pureBending.txt",
+    "output": "pure_bending.csv",
+    "samples": 6395,
+    "strain_unit": "microstrain",
+    "s_axis": "linspace(0,4.277,N), same assumption as MATLAB main_test_Helix.m; not independently calibrated"
+  },
+  {
+    "source": "C:\\Users\\ZRF\\Sync Devices Sharing\\2025 Paper\\2025-2026 icra\\Code_Helix Sensor\\Helix sensor streaming and force reconstruction\\Exp_data_index900_bendingWithForce.txt",
+    "output": "bending_contact.csv",
+    "samples": 6395,
+    "strain_unit": "microstrain",
+    "s_axis": "linspace(0,4.277,N), same assumption as MATLAB main_test_Helix.m; not independently calibrated"
+  }
+]

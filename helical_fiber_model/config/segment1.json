@@ -1,0 +1,13 @@
+{
+  "radius_m": 0.017,
+  "pitch_m": 0.005,
+  "fiber_length_m": 4.277,
+  "backbone_length_m": 0.2,
+  "zones": 8,
+  "strain_scale": 0.012,
+  "frequency_modifier": 0.999,
+  "disk_slope_strain_per_n": 2.7914e-05,
+  "disk_intercept_strain": 3.5526000000000005e-05,
+  "gap_slope_strain_per_n": 1.6845e-05,
+  "gap_intercept_strain": 4.2556e-05
+}
