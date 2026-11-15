@@ -226,6 +226,25 @@ class HelicalFiberModel:
                 'xyz_m': self.helix_xyz([s[i]], kappa, phi)[0].tolist()})
         return results
 
+    def detect_contact_groups(self, s, residual, kappa=0., phi=0.):
+        """Group consecutive above-threshold samples into measured surface traces."""
+        active = np.flatnonzero(np.isfinite(residual) & (np.abs(residual) >= self.config.threshold_strain))
+        groups = []
+        for indices in np.split(active, np.flatnonzero(np.diff(active) > 1) + 1):
+            if len(indices) < 2:
+                continue
+            locations = s[indices]
+            values = residual[indices]
+            groups.append({
+                'sample_start_index': int(indices[0]),
+                'sample_stop_index': int(indices[-1]),
+                'sample_count': len(indices),
+                's_m': locations.tolist(),
+                'peak_strain': float(values[np.argmax(np.abs(values))]),
+                'xyz_m': self.helix_xyz(locations, kappa, phi).tolist(),
+            })
+        return groups
+
     def _backbone_geometry(self, s, kappa, phi):
         s = self.coordinates(s)
         c = self.config

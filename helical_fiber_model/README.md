@@ -48,7 +48,34 @@ s_m,strain
 
 示例文件沿用 MATLAB `linspace(0,4.277,N)`，并非对其物理坐标做了重新标定。
 
-## ODiSI 双通道实时重构
+## ODiSI 实时重构
+
+### Distal 单通道标定
+
+从仓库根目录运行 Channel 2。临时敏感段起点为仪器坐标 1.2 m。直线基线和弯曲参考使用同一次 Tare，拟合窗口为仪器坐标 1.8012–4.5988 m。增益按目测约 40° 的无接触弯曲设置，方位角仍待已知方向对齐。
+
+```powershell
+& .\.conda\python.exe .\helical_fiber_model\live.py --channel 2 --unit microstrain --sensor-start-m 1.2 --config .\helical_fiber_model\config\distal_provisional.json --baseline .\helical_fiber_model\config\distal_straight_baseline.csv --plot
+```
+
+### Proximal 与 distal 串联显示
+
+从仓库根目录运行。两次 `--segment` 按基座到末端的顺序填写。两段使用独立的直线基线和拟合窗口，图窗显示两段直径 35 mm 的棒体及各自的接触候选。
+
+```powershell
+& .\.conda\python.exe .\helical_fiber_model\live.py --unit microstrain --sensor-start-m 1.2 `
+  --segment 1 .\helical_fiber_model\config\proximal_provisional.json `
+  --segment 2 .\helical_fiber_model\config\distal_provisional.json `
+  --segment-baseline 1 .\helical_fiber_model\config\proximal_straight_baseline.csv `
+  --segment-baseline 2 .\helical_fiber_model\config\distal_straight_baseline.csv `
+  --serial --plot
+```
+
+串联图使用 proximal 基座坐标系，假定两段连接处没有额外安装转角。图形使用各通道最新拟合，终端 JSON 仍逐通道输出该节的局部坐标。
+
+接触显示可在启动时选择。`--contact-mode peak` 为默认模式，沿用峰值红点。`--contact-mode area` 将至少两个连续达到残差阈值的有效样点合成一组，并沿棒体表面画出红色范围。缺测或低于阈值的样点会分开相邻组。JSON 保留 `contacts` 峰值结果，并在 area 模式下增加 `contact_groups`，包含样点范围与对应的表面坐标。红色范围表示光纤上测到的接触响应范围，无法直接换算为物理接触面积。
+
+### Proximal 单通道与独立双通道示例
 
 当前只有 proximal 段时，从仓库根目录运行以下单通道命令。`--sensor-start-m 1.2` 使用仪器坐标的 1.2 m 作为敏感段零点，并保留仪器原始测点间距。
 
@@ -109,3 +136,11 @@ cal = calibrate_force([1, 2, 3], np.array([60, 80, 100])*1e-6)
 - 相邻圈的多个峰是接触候选，不自动等于多个独立外力，不应直接相加当作总力。
 
 当前实测样例没有配套角度/力/位置真值，已完成流程验证，尚不能宣称真实装置反演准确度达到论文指标。
+
+powershell code:
+ & .\.conda\python.exe .\helical_fiber_model\live.py --unit microstrain --sensor-start-m 1.2 `
+>>   --segment 1 .\helical_fiber_model\config\proximal_provisional.json `
+>>   --segment 2 .\helical_fiber_model\config\distal_provisional.json `
+>>   --segment-baseline 1 .\helical_fiber_model\config\proximal_straight_baseline.csv `
+>>   --segment-baseline 2 .\helical_fiber_model\config\distal_straight_baseline.csv `
+>>   --serial --plot --contact-mode area
